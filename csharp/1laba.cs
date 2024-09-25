@@ -8,7 +8,7 @@ class Car {
     public Car(){
         Color = "White";
         Speed = 200;
-        Name = "Nisan";
+        Name = "Toyota";
     }
 
     public Car(string color, int speed, string name){
@@ -28,7 +28,7 @@ class Program
     static void Main(string[] args)
     {
         Car car2 = new Car();
-        Car car3 = new Car("Black", 270, "BMW");
+        Car car3 = new Car("Black", 270, "Hyundai");
         
         Console.WriteLine(car2.CarInfo());
         Console.WriteLine(car3.CarInfo());
