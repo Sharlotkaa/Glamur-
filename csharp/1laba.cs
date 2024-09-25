@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 
+codespace-laughing-chainsaw-7v9wx565pw77hr9x9
 // Класс, представляющий книгу
 public class Book
 {
     public string Title { get; set; }
     public string Author { get; set; }
     public int Year { get; set; }
+
 
     // Конструктор
     public Book(string title, string author, int year)
@@ -28,6 +30,7 @@ class Program
 {
     static void Main(string[] args)
     {
+ codespace-laughing-chainsaw-7v9wx565pw77hr9x9
         // Создаём список книг
         List<Book> books = new List<Book>();
 
@@ -37,6 +40,7 @@ class Program
         books.Add(new Book("1984", "George Orwell", 1949));
         books.Add(new Book("The Great Gatsby", "F. Scott Fitzgerald", 1925));
         books.Add(new Book("Moby Dick", "Herman Melville", 1851));
+
 
         // Выводим список книг на экран
         Console.WriteLine("Список книг:");
