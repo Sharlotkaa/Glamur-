@@ -18,7 +18,18 @@ namespace LibraryManagementSystem
             IsAvailable = true;
         }
 
-        public virtual void DisplayInfo() // virtual для возможности переопределения в наследниках
+        // Публичные методы для доступа к защищенным полям
+        public string GetTitle()
+        {
+            return Title;
+        }
+
+        public string GetAuthor()
+        {
+            return Author;
+        }
+
+        public virtual void DisplayInfo()
         {
             Console.WriteLine($"Название: {Title}, Автор: {Author}, Доступна: {IsAvailable}");
         }
@@ -52,7 +63,6 @@ namespace LibraryManagementSystem
             FileSize = fileSize;
         }
 
-        // Переопределение метода для добавления информации о размере файла
         public override void DisplayInfo()
         {
             base.DisplayInfo();
@@ -78,11 +88,12 @@ namespace LibraryManagementSystem
             {
                 BorrowedBooks.Add(book);
                 book.Borrow();
-                Console.WriteLine($"{Name} взял(а) книгу: {book.Title}");
+                // Использование публичного метода для доступа к названию книги
+                Console.WriteLine($"{Name} взял(а) книгу: {book.GetTitle()}");
             }
             else
             {
-                Console.WriteLine($"Книга {book.Title} недоступна.");
+                Console.WriteLine($"Книга {book.GetTitle()} недоступна.");
             }
         }
 
@@ -92,7 +103,8 @@ namespace LibraryManagementSystem
             {
                 BorrowedBooks.Remove(book);
                 book.Return();
-                Console.WriteLine($"{Name} вернул(а) книгу: {book.Title}");
+                // Использование публичного метода для доступа к названию книги
+                Console.WriteLine($"{Name} вернул(а) книгу: {book.GetTitle()}");
             }
         }
     }
@@ -131,7 +143,7 @@ namespace LibraryManagementSystem
 
         public Book FindBookByTitle(string title)
         {
-            return Books.Find(book => book.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
+            return Books.Find(book => book.GetTitle().Equals(title, StringComparison.OrdinalIgnoreCase));
         }
     }
 
