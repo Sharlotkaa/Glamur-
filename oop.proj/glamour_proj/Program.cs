@@ -1,13 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace LibraryManagementSystem
 {
+    // Базовый класс для книги
     public class Book
     {
-        public string Title { get; set; }
-        public string Author { get; set; }
-        public bool IsAvailable { get; set; }
+        // Поля Title и Author теперь защищены, доступны только в классе и его наследниках
+        protected string Title { get; private set; }
+        protected string Author { get; private set; }
+        public bool IsAvailable { get; private set; }
 
         public Book(string title, string author)
         {
@@ -16,17 +18,53 @@ namespace LibraryManagementSystem
             IsAvailable = true;
         }
 
-        public void DisplayInfo()
+        public virtual void DisplayInfo() // virtual для возможности переопределения в наследниках
         {
             Console.WriteLine($"Название: {Title}, Автор: {Author}, Доступна: {IsAvailable}");
         }
+
+        public void Borrow()
+        {
+            if (IsAvailable)
+            {
+                IsAvailable = false;
+            }
+            else
+            {
+                Console.WriteLine("Книга уже взята.");
+            }
+        }
+
+        public void Return()
+        {
+            IsAvailable = true;
+        }
     }
 
-    //читатель и его действия(возврат, взятие)
+    // Наследник для электронной книги
+    public class EBook : Book
+    {
+        public int FileSize { get; private set; }
+
+        public EBook(string title, string author, int fileSize)
+            : base(title, author)
+        {
+            FileSize = fileSize;
+        }
+
+        // Переопределение метода для добавления информации о размере файла
+        public override void DisplayInfo()
+        {
+            base.DisplayInfo();
+            Console.WriteLine($"Размер файла: {FileSize} MB");
+        }
+    }
+
+    // Класс для читателя
     public class Member
     {
-        public string Name { get; set; }
-        public List<Book> BorrowedBooks { get; set; }
+        public string Name { get; private set; }
+        private List<Book> BorrowedBooks { get; set; }
 
         public Member(string name)
         {
@@ -34,13 +72,12 @@ namespace LibraryManagementSystem
             BorrowedBooks = new List<Book>();
         }
 
-        //проверка взятия книги
         public void BorrowBook(Book book)
         {
             if (book.IsAvailable)
             {
                 BorrowedBooks.Add(book);
-                book.IsAvailable = false;
+                book.Borrow();
                 Console.WriteLine($"{Name} взял(а) книгу: {book.Title}");
             }
             else
@@ -48,23 +85,23 @@ namespace LibraryManagementSystem
                 Console.WriteLine($"Книга {book.Title} недоступна.");
             }
         }
-        //возврат
+
         public void ReturnBook(Book book)
         {
             if (BorrowedBooks.Contains(book))
             {
                 BorrowedBooks.Remove(book);
-                book.IsAvailable = true;
+                book.Return();
                 Console.WriteLine($"{Name} вернул(а) книгу: {book.Title}");
             }
         }
     }
 
-    //управление библиотекой
+    // Класс библиотеки с использованием композиции
     public class Library
     {
-        public List<Book> Books { get; set; }
-        public List<Member> Members { get; set; }
+        private List<Book> Books { get; set; }
+        private List<Member> Members { get; set; }
 
         public Library()
         {
@@ -94,31 +131,23 @@ namespace LibraryManagementSystem
 
         public Book FindBookByTitle(string title)
         {
-            foreach (var book in Books)
-            {
-                if (string.Equals(book.Title, title, StringComparison.OrdinalIgnoreCase))
-                {
-                    return book;
-                }
-            }
-            return null;
+            return Books.Find(book => book.Title.Equals(title, StringComparison.OrdinalIgnoreCase));
         }
     }
 
+    // Главная программа
     class Program
     {
         static void Main(string[] args)
         {
-            //создание самой библиотеки
             Library library = new Library();
 
-            //добавление книг
+            // Добавление книг
             library.AddBook(new Book("The Master and Margarita", "Mikhail Bulgakov"));
             library.AddBook(new Book("War and Peace", "Lev Tolstoy"));
-            library.AddBook(new Book("The Lord of the Rings", "J. R. R. Tolkien"));
+            library.AddBook(new EBook("The Lord of the Rings", "J. R. R. Tolkien", 500));
             library.AddBook(new Book("Cloud Atlas", "David Mitchell"));
 
-            //пользователь
             Console.Write("Добро пожаловать в библиотеку. Введите ваше имя: ");
             string firstName = Console.ReadLine();
 
@@ -127,7 +156,7 @@ namespace LibraryManagementSystem
 
             string fullName = $"{firstName} {lastName}";
 
-            //регистрация читателя
+            // Регистрация читателя
             Member member = new Member(fullName);
             library.RegisterMember(member);
 
@@ -135,18 +164,17 @@ namespace LibraryManagementSystem
 
             while (continueLibrary)
             {
-                //вывод всех книг
+                // Вывод всех книг
                 library.DisplayAllBooks();
 
                 Console.Write("\nВведите название книги, которую хотите взять: ");
                 string bookTitle = Console.ReadLine();
 
-                //поиск книги
+                // Поиск книги
                 Book bookToBorrow = library.FindBookByTitle(bookTitle);
 
                 if (bookToBorrow != null)
                 {
-                    //тут взятие книги
                     member.BorrowBook(bookToBorrow);
                 }
                 else
@@ -154,7 +182,6 @@ namespace LibraryManagementSystem
                     Console.WriteLine("Такой книги нет в библиотеке.");
                 }
 
-                //выводит все книги после взятия
                 library.DisplayAllBooks();
 
                 Console.Write("\nХотите вернуть книгу? (y/n): ");
