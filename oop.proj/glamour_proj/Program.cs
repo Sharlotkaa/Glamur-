@@ -3,10 +3,17 @@ using System.Collections.Generic;
 
 namespace LibraryManagementSystem
 {
-    // Базовый класс для книги
-    public class Book
+    // Интерфейс
+    public interface IBookInfo
     {
-        // Поля Title и Author теперь защищены, доступны только в классе и его наследниках
+        string GetTitle();
+        string GetAuthor();
+        void DisplayInfo();
+    }
+
+    // Базовый класс для книги, реализующий интерфейс
+    public class Book : IBookInfo
+    {
         protected string Title { get; private set; }
         protected string Author { get; private set; }
         public bool IsAvailable { get; private set; }
@@ -18,7 +25,6 @@ namespace LibraryManagementSystem
             IsAvailable = true;
         }
 
-        // Публичные методы для доступа к защищенным полям
         public string GetTitle()
         {
             return Title;
@@ -52,8 +58,8 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Наследник для электронной книги
-    public class EBook : Book
+    // Наследник для электронной книги, также реализующий интерфейс
+    public class EBook : Book, IBookInfo
     {
         public int FileSize { get; private set; }
 
@@ -88,7 +94,6 @@ namespace LibraryManagementSystem
             {
                 BorrowedBooks.Add(book);
                 book.Borrow();
-                // Использование публичного метода для доступа к названию книги
                 Console.WriteLine($"{Name} взял(а) книгу: {book.GetTitle()}");
             }
             else
@@ -103,13 +108,12 @@ namespace LibraryManagementSystem
             {
                 BorrowedBooks.Remove(book);
                 book.Return();
-                // Использование публичного метода для доступа к названию книги
                 Console.WriteLine($"{Name} вернул(а) книгу: {book.GetTitle()}");
             }
         }
     }
 
-    // Класс библиотеки с использованием композиции
+    // Класс библиотеки
     public class Library
     {
         private List<Book> Books { get; set; }
@@ -213,6 +217,11 @@ namespace LibraryManagementSystem
                     continueLibrary = false;
                 }
             }
+
+            Console.WriteLine("Спасибо за использование библиотеки!");
+        }
+    }
+}
 
             Console.WriteLine("Спасибо за использование библиотеки!");
         }
