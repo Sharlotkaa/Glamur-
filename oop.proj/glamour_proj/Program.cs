@@ -3,16 +3,19 @@ using System.Collections.Generic;
 
 namespace LibraryManagementSystem
 {
-    // Интерфейс
-    public interface IBookInfo
+    // Общий интерфейс для всех библиотечных предметов
+    public interface ILibraryItem
     {
         string GetTitle();
         string GetAuthor();
         void DisplayInfo();
+        bool IsAvailable { get; }
+        void Borrow();
+        void Return();
     }
 
-    // Базовый класс для книги, реализующий интерфейс
-    public class Book : IBookInfo
+    // Абстрактный базовый класс для книг
+    public abstract class Book : ILibraryItem
     {
         protected string Title { get; private set; }
         protected string Author { get; private set; }
@@ -35,9 +38,87 @@ namespace LibraryManagementSystem
             return Author;
         }
 
-        public virtual void DisplayInfo()
+        public abstract void DisplayInfo();
+
+        public void Borrow()
         {
-            Console.WriteLine($"Название: {Title}, Автор: {Author}, Доступна: {IsAvailable}");
+            if (IsAvailable)
+            {
+                IsAvailable = false;
+            }
+            else
+            {
+                Console.WriteLine("Предмет уже взят.");
+            }
+        }
+
+        public void Return()
+        {
+            IsAvailable = true;
+        }
+    }
+
+    // Наследник для электронной книги
+    public class EBook : Book
+    {
+        public int FileSize { get; private set; } // в МБ
+
+        public EBook(string title, string author, int fileSize)
+            : base(title, author)
+        {
+            FileSize = fileSize;
+        }
+
+        public override void DisplayInfo()
+        {
+            Console.WriteLine($"[E-Book] Название: {Title}, Автор: {Author}, Доступна: {IsAvailable}, Размер файла: {FileSize} MB");
+        }
+    }
+
+    // Наследник для аудиокниги
+    public class AudioBook : Book
+    {
+        public TimeSpan Duration { get; private set; }
+
+        public AudioBook(string title, string author, TimeSpan duration)
+            : base(title, author)
+        {
+            Duration = duration;
+        }
+
+        public override void DisplayInfo()
+        {
+            Console.WriteLine($"[AudioBook] Название: {Title}, Автор: {Author}, Доступна: {IsAvailable}, Длительность: {Duration}");
+        }
+    }
+
+    // Класс для журналов
+    public class Magazine : ILibraryItem
+    {
+        public string Title { get; private set; }
+        public string Editor { get; private set; }
+        public bool IsAvailable { get; private set; }
+
+        public Magazine(string title, string editor)
+        {
+            Title = title;
+            Editor = editor;
+            IsAvailable = true;
+        }
+
+        public string GetTitle()
+        {
+            return Title;
+        }
+
+        public string GetAuthor()
+        {
+            return Editor;
+        }
+
+        public void DisplayInfo()
+        {
+            Console.WriteLine($"[Magazine] Название: {Title}, Редактор: {Editor}, Доступна: {IsAvailable}");
         }
 
         public void Borrow()
@@ -48,7 +129,7 @@ namespace LibraryManagementSystem
             }
             else
             {
-                Console.WriteLine("Книга уже взята.");
+                Console.WriteLine("Журнал уже взят.");
             }
         }
 
@@ -58,96 +139,147 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Наследник для электронной книги, также реализующий интерфейс
-    public class EBook : Book, IBookInfo
-    {
-        public int FileSize { get; private set; }
-
-        public EBook(string title, string author, int fileSize)
-            : base(title, author)
-        {
-            FileSize = fileSize;
-        }
-
-        public override void DisplayInfo()
-        {
-            base.DisplayInfo();
-            Console.WriteLine($"Размер файла: {FileSize} MB");
-        }
-    }
-
-    // Класс для читателя
-    public class Member
+    // Абстрактный класс для пользователей библиотеки
+    public abstract class LibraryUser
     {
         public string Name { get; private set; }
-        private List<Book> BorrowedBooks { get; set; }
+        protected List<ILibraryItem> BorrowedItems { get; set; }
 
-        public Member(string name)
+        public LibraryUser(string name)
         {
             Name = name;
-            BorrowedBooks = new List<Book>();
+            BorrowedItems = new List<ILibraryItem>();
         }
 
-        public void BorrowBook(Book book)
+        public void BorrowItem(ILibraryItem item)
         {
-            if (book.IsAvailable)
+            if (item.IsAvailable)
             {
-                BorrowedBooks.Add(book);
-                book.Borrow();
-                Console.WriteLine($"{Name} взял(а) книгу: {book.GetTitle()}");
+                BorrowedItems.Add(item);
+                item.Borrow();
+                Console.WriteLine($"{Name} взял(а) предмет: {item.GetTitle()}");
             }
             else
             {
-                Console.WriteLine($"Книга {book.GetTitle()} недоступна.");
+                Console.WriteLine($"Предмет {item.GetTitle()} недоступен.");
             }
         }
 
-        public void ReturnBook(Book book)
+        public void ReturnItem(ILibraryItem item)
         {
-            if (BorrowedBooks.Contains(book))
+            if (BorrowedItems.Contains(item))
             {
-                BorrowedBooks.Remove(book);
-                book.Return();
-                Console.WriteLine($"{Name} вернул(а) книгу: {book.GetTitle()}");
+                BorrowedItems.Remove(item);
+                item.Return();
+                Console.WriteLine($"{Name} вернул(а) предмет: {item.GetTitle()}");
             }
+            else
+            {
+                Console.WriteLine($"{Name} не брал(а) предмет: {item.GetTitle()}");
+            }
+        }
+
+        public abstract void DisplayUserInfo();
+    }
+
+    // Конкретный класс читателя
+    public class Member : LibraryUser
+    {
+        public Member(string name) : base(name)
+        {
+        }
+
+        public override void DisplayUserInfo()
+        {
+            Console.WriteLine($"Читатель: {Name}, Количество взятых предметов: {BorrowedItems.Count}");
         }
     }
 
-    // Класс библиотеки
-    public class Library
+    // Конкретный класс премиум-читателя
+    public class PremiumMember : LibraryUser
     {
-        private List<Book> Books { get; set; }
-        private List<Member> Members { get; set; }
+        public DateTime MembershipExpiry { get; private set; }
 
-        public Library()
+        public PremiumMember(string name, DateTime expiryDate) : base(name)
         {
-            Books = new List<Book>();
-            Members = new List<Member>();
+            MembershipExpiry = expiryDate;
         }
 
-        public void AddBook(Book book)
+        public override void DisplayUserInfo()
         {
-            Books.Add(book);
+            Console.WriteLine($"Премиум читатель: {Name}, Срок действия членства: {MembershipExpiry.ToShortDateString()}, Количество взятых предметов: {BorrowedItems.Count}");
+        }
+    }
+
+    // Абстрактный класс для библиотеки
+    public abstract class LibraryBase
+    {
+        protected List<ILibraryItem> Items { get; set; }
+        protected List<LibraryUser> Members { get; set; }
+
+        public LibraryBase()
+        {
+            Items = new List<ILibraryItem>();
+            Members = new List<LibraryUser>();
         }
 
-        public void RegisterMember(Member member)
+        public void AddItem(ILibraryItem item)
+        {
+            Items.Add(item);
+        }
+
+        public void RegisterMember(LibraryUser member)
         {
             Members.Add(member);
             Console.WriteLine($"Зарегистрирован читатель: {member.Name}");
         }
 
-        public void DisplayAllBooks()
+        public void DisplayAllItems()
         {
-            Console.WriteLine("\nКниги в библиотеке:");
-            foreach (var book in Books)
+            Console.WriteLine("\nПредметы в библиотеке:");
+            foreach (var item in Items)
             {
-                book.DisplayInfo();
+                item.DisplayInfo();
             }
         }
 
-        public Book FindBookByTitle(string title)
+        public ILibraryItem FindItemByTitle(string title)
         {
-            return Books.Find(book => book.GetTitle().Equals(title, StringComparison.OrdinalIgnoreCase));
+            return Items.Find(item => item.GetTitle().Equals(title, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public abstract void AdditionalLibraryFunctionality();
+    }
+
+    // Конкретный класс библиотеки
+    public class Library : LibraryBase
+    {
+        public Library() : base()
+        {
+        }
+
+        public override void AdditionalLibraryFunctionality()
+        {
+            // Реализация специфичной функциональности для стандартной библиотеки
+        }
+    }
+
+    // Конкретный класс цифровой библиотеки
+    public class DigitalLibrary : LibraryBase
+    {
+        public DigitalLibrary() : base()
+        {
+        }
+
+        public override void AdditionalLibraryFunctionality()
+        {
+            // Реализация специфичной функциональности для цифровой библиотеки
+        }
+
+        public void DownloadEBook(EBook ebook)
+        {
+            Console.WriteLine($"Скачивается электронная книга: {ebook.GetTitle()}");
+            // Логика скачивания
         }
     }
 
@@ -159,10 +291,15 @@ namespace LibraryManagementSystem
             Library library = new Library();
 
             // Добавление книг
-            library.AddBook(new Book("The Master and Margarita", "Mikhail Bulgakov"));
-            library.AddBook(new Book("War and Peace", "Lev Tolstoy"));
-            library.AddBook(new EBook("The Lord of the Rings", "J. R. R. Tolkien", 500));
-            library.AddBook(new Book("Cloud Atlas", "David Mitchell"));
+            library.AddItem(new EBook("The Master and Margarita", "Mikhail Bulgakov", 300));
+            library.AddItem(new EBook("War and Peace", "Lev Tolstoy", 400));
+            library.AddItem(new EBook("The Lord of the Rings", "J. R. R. Tolkien", 500));
+            library.AddItem(new AudioBook("Cloud Atlas Audiobook", "David Mitchell", TimeSpan.FromHours(6)));
+            library.AddItem(new AudioBook("Harry Potter Audiobook", "J.K. Rowling", TimeSpan.FromHours(8)));
+
+            // Добавление журналов
+            library.AddItem(new Magazine("National Geographic", "Susan Goldberg"));
+            library.AddItem(new Magazine("Time", "Edward Felsenthal"));
 
             Console.Write("Добро пожаловать в библиотеку. Введите ваше имя: ");
             string firstName = Console.ReadLine();
@@ -180,48 +317,43 @@ namespace LibraryManagementSystem
 
             while (continueLibrary)
             {
-                // Вывод всех книг
-                library.DisplayAllBooks();
+                // Вывод всех предметов
+                library.DisplayAllItems();
 
-                Console.Write("\nВведите название книги, которую хотите взять: ");
-                string bookTitle = Console.ReadLine();
+                Console.Write("\nВведите название предмета, который хотите взять: ");
+                string itemTitle = Console.ReadLine();
 
-                // Поиск книги
-                Book bookToBorrow = library.FindBookByTitle(bookTitle);
+                // Поиск предмета
+                ILibraryItem itemToBorrow = library.FindItemByTitle(itemTitle);
 
-                if (bookToBorrow != null)
+                if (itemToBorrow != null)
                 {
-                    member.BorrowBook(bookToBorrow);
+                    member.BorrowItem(itemToBorrow);
                 }
                 else
                 {
-                    Console.WriteLine("Такой книги нет в библиотеке.");
+                    Console.WriteLine("Такого предмета нет в библиотеке.");
                 }
 
-                library.DisplayAllBooks();
+                library.DisplayAllItems();
 
-                Console.Write("\nХотите вернуть книгу? (y/n): ");
+                Console.Write("\nХотите вернуть предмет? (y/n): ");
                 string returnAnswer = Console.ReadLine();
 
-                if (returnAnswer.ToLower() == "y" && bookToBorrow != null)
+                if (returnAnswer.Trim().ToLower() == "y" && itemToBorrow != null)
                 {
-                    member.ReturnBook(bookToBorrow);
+                    member.ReturnItem(itemToBorrow);
                 }
 
-                library.DisplayAllBooks();
+                library.DisplayAllItems();
 
-                Console.Write("\nХотите взять другую книгу? (y/n): ");
+                Console.Write("\nХотите взять другой предмет? (y/n): ");
                 string continueAnswer = Console.ReadLine();
-                if (continueAnswer.ToLower() != "y")
+                if (continueAnswer.Trim().ToLower() != "y")
                 {
                     continueLibrary = false;
                 }
             }
-
-            Console.WriteLine("Спасибо за использование библиотеки!");
-        }
-    }
-}
 
             Console.WriteLine("Спасибо за использование библиотеки!");
         }
