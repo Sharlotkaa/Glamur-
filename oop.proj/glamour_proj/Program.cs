@@ -14,7 +14,7 @@ namespace LibraryManagementSystem
         void Return();
     }
 
-    // Абстрактный базовый класс для книг
+    // Абстрактный класс для книг
     public abstract class Book : ILibraryItem
     {
         protected string Title { get; private set; }
@@ -58,10 +58,10 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Наследник для электронной книги
+    // Класс электронной книги
     public class EBook : Book
     {
-        public int FileSize { get; private set; } // в МБ
+        public int FileSize { get; private set; }
 
         public EBook(string title, string author, int fileSize)
             : base(title, author)
@@ -75,7 +75,7 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Наследник для аудиокниги
+    // Класс аудиокниги
     public class AudioBook : Book
     {
         public TimeSpan Duration { get; private set; }
@@ -92,7 +92,7 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Класс для журналов
+    // Класс журнала
     public class Magazine : ILibraryItem
     {
         public string Title { get; private set; }
@@ -139,7 +139,7 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Абстрактный класс для пользователей библиотеки
+    // Класс для пользователей библиотеки
     public abstract class LibraryUser
     {
         public string Name { get; private set; }
@@ -182,7 +182,6 @@ namespace LibraryManagementSystem
         public abstract void DisplayUserInfo();
     }
 
-    // Конкретный класс читателя
     public class Member : LibraryUser
     {
         public Member(string name) : base(name)
@@ -195,7 +194,6 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Конкретный класс премиум-читателя
     public class PremiumMember : LibraryUser
     {
         public DateTime MembershipExpiry { get; private set; }
@@ -211,7 +209,6 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Абстрактный класс для библиотеки
     public abstract class LibraryBase
     {
         protected List<ILibraryItem> Items { get; set; }
@@ -251,7 +248,6 @@ namespace LibraryManagementSystem
         public abstract void AdditionalLibraryFunctionality();
     }
 
-    // Конкретный класс библиотеки
     public class Library : LibraryBase
     {
         public Library() : base()
@@ -264,43 +260,107 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Конкретный класс цифровой библиотеки
-    public class DigitalLibrary : LibraryBase
+    // Классы для работы с массивами
+    public class BookTitles
     {
-        public DigitalLibrary() : base()
+        public string[] Titles;
+
+        public BookTitles()
         {
+            Titles = new string[] { "The Master and Margarita", "War and Peace", "The Lord of the Rings", "Cloud Atlas", "Harry Potter" };
         }
 
-        public override void AdditionalLibraryFunctionality()
+        public void DisplayTitles()
         {
-            // Реализация специфичной функциональности для цифровой библиотеки
-        }
-
-        public void DownloadEBook(EBook ebook)
-        {
-            Console.WriteLine($"Скачивается электронная книга: {ebook.GetTitle()}");
-            // Логика скачивания
+            Console.WriteLine("Названия книг в библиотеке:");
+            foreach (var title in Titles)
+            {
+                Console.WriteLine($"- {title}");
+            }
         }
     }
 
-    // Главная программа
+    public class BookInfo
+    {
+        public string[,] Books;
+
+        public BookInfo()
+        {
+            Books = new string[,]
+            {
+                { "The Master and Margarita", "Mikhail Bulgakov", "300 MB" },
+                { "War and Peace", "Lev Tolstoy", "400 MB" },
+                { "The Lord of the Rings", "J. R. R. Tolkien", "500 MB" },
+                { "Cloud Atlas", "David Mitchell", "6 hours" },
+                { "Harry Potter", "J.K. Rowling", "8 hours" }
+            };
+        }
+
+        public void DisplayBooks()
+        {
+            Console.WriteLine("\nИнформация о книгах:");
+            for (int i = 0; i < Books.GetLength(0); i++)
+            {
+                Console.WriteLine($"Название: {Books[i, 0]}, Автор: {Books[i, 1]}, Размер/Длительность: {Books[i, 2]}");
+            }
+        }
+    }
+
+    public class BooksByGenre
+    {
+        public string[][] Genres;
+
+        public BooksByGenre()
+        {
+            Genres = new string[][]
+            {
+                new string[] { "The Master and Margarita", "War and Peace" }, // Литература
+                new string[] { "The Lord of the Rings", "Harry Potter" }, // Фэнтези
+                new string[] { "Cloud Atlas" } // Научная фантастика
+            };
+        }
+
+        public void DisplayBooksByGenre()
+        {
+            string[] genreNames = { "Литература", "Фэнтези", "Научная фантастика" };
+
+            for (int i = 0; i < Genres.Length; i++)
+            {
+                Console.WriteLine($"\nЖанр: {genreNames[i]}");
+                foreach (var book in Genres[i])
+                {
+                    Console.WriteLine($"- {book}");
+                }
+            }
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
         {
             Library library = new Library();
 
-            // Добавление книг
+            // Использование одномерного массива для отображения названий книг
+            BookTitles bookTitles = new BookTitles();
+            bookTitles.DisplayTitles();
+
+            // Использование многомерного массива для отображения информации о книгах
+            BookInfo bookInfo = new BookInfo();
+            bookInfo.DisplayBooks();
+
+            // Использование зубчатого массива для отображения книг по жанрам
+            BooksByGenre booksByGenre = new BooksByGenre();
+            booksByGenre.DisplayBooksByGenre();
+
+            // Добавление книг в библиотеку
             library.AddItem(new EBook("The Master and Margarita", "Mikhail Bulgakov", 300));
             library.AddItem(new EBook("War and Peace", "Lev Tolstoy", 400));
             library.AddItem(new EBook("The Lord of the Rings", "J. R. R. Tolkien", 500));
             library.AddItem(new AudioBook("Cloud Atlas Audiobook", "David Mitchell", TimeSpan.FromHours(6)));
             library.AddItem(new AudioBook("Harry Potter Audiobook", "J.K. Rowling", TimeSpan.FromHours(8)));
 
-            // Добавление журналов
-            library.AddItem(new Magazine("National Geographic", "Susan Goldberg"));
-            library.AddItem(new Magazine("Time", "Edward Felsenthal"));
-
+            // Ввод имени пользователя
             Console.Write("Добро пожаловать в библиотеку. Введите ваше имя: ");
             string firstName = Console.ReadLine();
 
