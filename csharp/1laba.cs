@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace LibraryManagementSystem
 {
-    // Общий интерфейс для всех библиотечных предметов
     public interface ILibraryItem
     {
         string GetTitle();
@@ -14,7 +13,6 @@ namespace LibraryManagementSystem
         void Return();
     }
 
-    // Абстрактный класс для книг
     public abstract class Book : ILibraryItem
     {
         protected string Title { get; private set; }
@@ -58,7 +56,6 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Класс электронной книги
     public class EBook : Book
     {
         public int FileSize { get; private set; }
@@ -75,7 +72,6 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Класс аудиокниги
     public class AudioBook : Book
     {
         public TimeSpan Duration { get; private set; }
@@ -92,7 +88,6 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Класс журнала
     public class Magazine : ILibraryItem
     {
         public string Title { get; private set; }
@@ -139,7 +134,6 @@ namespace LibraryManagementSystem
         }
     }
 
-    // Класс для пользователей библиотеки
     public abstract class LibraryUser
     {
         public string Name { get; private set; }
@@ -184,9 +178,7 @@ namespace LibraryManagementSystem
 
     public class Member : LibraryUser
     {
-        public Member(string name) : base(name)
-        {
-        }
+        public Member(string name) : base(name) { }
 
         public override void DisplayUserInfo()
         {
@@ -211,23 +203,39 @@ namespace LibraryManagementSystem
 
     public abstract class LibraryBase
     {
-        protected List<ILibraryItem> Items { get; set; }
-        protected List<LibraryUser> Members { get; set; }
+        public Dictionary<int, ILibraryItem> Items { get; set; }  // Изменено на public
+        public List<LibraryUser> Members { get; set; }  // Изменено на public
+        public ILibraryItem[] ItemsArray;  // Массив для хранения предметов
+        public LibraryUser[] MembersArray;  // Массив для хранения читателей
 
         public LibraryBase()
         {
-            Items = new List<ILibraryItem>();
+            Items = new Dictionary<int, ILibraryItem>();
             Members = new List<LibraryUser>();
+            ItemsArray = new ILibraryItem[100];  // Предположим, что у нас есть место для 100 предметов
+            MembersArray = new LibraryUser[100];  // Предположим, что у нас есть место для 100 читателей
         }
 
-        public void AddItem(ILibraryItem item)
+        public ILibraryItem this[int id] => Items.ContainsKey(id) ? Items[id] : null;
+
+        public void AddItem(int id, ILibraryItem item)
         {
-            Items.Add(item);
+            Items[id] = item;
+            ItemsArray[id] = item;  // Также добавляем предмет в массив
+        }
+
+        public void AddItems(params (int id, ILibraryItem item)[] items)
+        {
+            foreach (var (id, item) in items)
+            {
+                AddItem(id, item);
+            }
         }
 
         public void RegisterMember(LibraryUser member)
         {
             Members.Add(member);
+            MembersArray[Members.Count - 1] = member;  // Добавляем читателя в массив
             Console.WriteLine($"Зарегистрирован читатель: {member.Name}");
         }
 
@@ -236,13 +244,8 @@ namespace LibraryManagementSystem
             Console.WriteLine("\nПредметы в библиотеке:");
             foreach (var item in Items)
             {
-                item.DisplayInfo();
+                item.Value.DisplayInfo();
             }
-        }
-
-        public ILibraryItem FindItemByTitle(string title)
-        {
-            return Items.Find(item => item.GetTitle().Equals(title, StringComparison.OrdinalIgnoreCase));
         }
 
         public abstract void AdditionalLibraryFunctionality();
@@ -250,88 +253,9 @@ namespace LibraryManagementSystem
 
     public class Library : LibraryBase
     {
-        public Library() : base()
-        {
-        }
-
         public override void AdditionalLibraryFunctionality()
         {
-            // Реализация специфичной функциональности для стандартной библиотеки
-        }
-    }
-
-    // Классы для работы с массивами
-    public class BookTitles
-    {
-        public string[] Titles;
-
-        public BookTitles()
-        {
-            Titles = new string[] { "The Master and Margarita", "War and Peace", "The Lord of the Rings", "Cloud Atlas", "Harry Potter" };
-        }
-
-        public void DisplayTitles()
-        {
-            Console.WriteLine("Названия книг в библиотеке:");
-            foreach (var title in Titles)
-            {
-                Console.WriteLine($"- {title}");
-            }
-        }
-    }
-
-    public class BookInfo
-    {
-        public string[,] Books;
-
-        public BookInfo()
-        {
-            Books = new string[,]
-            {
-                { "The Master and Margarita", "Mikhail Bulgakov", "300 MB" },
-                { "War and Peace", "Lev Tolstoy", "400 MB" },
-                { "The Lord of the Rings", "J. R. R. Tolkien", "500 MB" },
-                { "Cloud Atlas", "David Mitchell", "6 hours" },
-                { "Harry Potter", "J.K. Rowling", "8 hours" }
-            };
-        }
-
-        public void DisplayBooks()
-        {
-            Console.WriteLine("\nИнформация о книгах:");
-            for (int i = 0; i < Books.GetLength(0); i++)
-            {
-                Console.WriteLine($"Название: {Books[i, 0]}, Автор: {Books[i, 1]}, Размер/Длительность: {Books[i, 2]}");
-            }
-        }
-    }
-
-    public class BooksByGenre
-    {
-        public string[][] Genres;
-
-        public BooksByGenre()
-        {
-            Genres = new string[][]
-            {
-                new string[] { "The Master and Margarita", "War and Peace" }, // Литература
-                new string[] { "The Lord of the Rings", "Harry Potter" }, // Фэнтези
-                new string[] { "Cloud Atlas" } // Научная фантастика
-            };
-        }
-
-        public void DisplayBooksByGenre()
-        {
-            string[] genreNames = { "Литература", "Фэнтези", "Научная фантастика" };
-
-            for (int i = 0; i < Genres.Length; i++)
-            {
-                Console.WriteLine($"\nЖанр: {genreNames[i]}");
-                foreach (var book in Genres[i])
-                {
-                    Console.WriteLine($"- {book}");
-                }
-            }
+            // Дополнительная функциональность библиотеки
         }
     }
 
@@ -341,81 +265,117 @@ namespace LibraryManagementSystem
         {
             Library library = new Library();
 
-            // Использование одномерного массива для отображения названий книг
-            BookTitles bookTitles = new BookTitles();
-            bookTitles.DisplayTitles();
-
-            // Использование многомерного массива для отображения информации о книгах
-            BookInfo bookInfo = new BookInfo();
-            bookInfo.DisplayBooks();
-
-            // Использование зубчатого массива для отображения книг по жанрам
-            BooksByGenre booksByGenre = new BooksByGenre();
-            booksByGenre.DisplayBooksByGenre();
-
-            // Добавление книг в библиотеку
-            library.AddItem(new EBook("The Master and Margarita", "Mikhail Bulgakov", 300));
-            library.AddItem(new EBook("War and Peace", "Lev Tolstoy", 400));
-            library.AddItem(new EBook("The Lord of the Rings", "J. R. R. Tolkien", 500));
-            library.AddItem(new AudioBook("Cloud Atlas Audiobook", "David Mitchell", TimeSpan.FromHours(6)));
-            library.AddItem(new AudioBook("Harry Potter Audiobook", "J.K. Rowling", TimeSpan.FromHours(8)));
-
-            // Ввод имени пользователя
-            Console.Write("Добро пожаловать в библиотеку. Введите ваше имя: ");
-            string firstName = Console.ReadLine();
-
-            Console.Write("Введите вашу фамилию: ");
-            string lastName = Console.ReadLine();
-
-            string fullName = $"{firstName} {lastName}";
-
-            // Регистрация читателя
-            Member member = new Member(fullName);
-            library.RegisterMember(member);
-
-            bool continueLibrary = true;
-
-            while (continueLibrary)
+            Console.WriteLine("Добро пожаловать в библиотеку!");
+            while (true)
             {
-                // Вывод всех предметов
-                library.DisplayAllItems();
+                Console.WriteLine("\nВыберите действие:");
+                Console.WriteLine("1. Добавить предмет в библиотеку");
+                Console.WriteLine("2. Зарегистрировать читателя");
+                Console.WriteLine("3. Взять предмет");
+                Console.WriteLine("4. Вернуть предмет");
+                Console.WriteLine("5. Показать все предметы");
+                Console.WriteLine("6. Выйти");
 
-                Console.Write("\nВведите название предмета, который хотите взять: ");
-                string itemTitle = Console.ReadLine();
+                string choice = Console.ReadLine();
 
-                // Поиск предмета
-                ILibraryItem itemToBorrow = library.FindItemByTitle(itemTitle);
-
-                if (itemToBorrow != null)
+                switch (choice)
                 {
-                    member.BorrowItem(itemToBorrow);
-                }
-                else
-                {
-                    Console.WriteLine("Такого предмета нет в библиотеке.");
-                }
+                    case "1":
+                        Console.WriteLine("Выберите тип предмета: 1. Электронная книга 2. Аудиокнига 3. Журнал");
+                        string itemType = Console.ReadLine();
 
-                library.DisplayAllItems();
+                        Console.Write("Введите название: ");
+                        string title = Console.ReadLine();
+                        Console.Write("Введите автора/редактора: ");
+                        string authorOrEditor = Console.ReadLine();
+                        int id = library.Items.Count + 1;
 
-                Console.Write("\nХотите вернуть предмет? (y/n): ");
-                string returnAnswer = Console.ReadLine();
+                        switch (itemType)
+                        {
+                            case "1":
+                                Console.Write("Введите размер файла (в MB): ");
+                                int fileSize = int.Parse(Console.ReadLine());
+                                library.AddItem(id, new EBook(title, authorOrEditor, fileSize));
+                                break;
+                            case "2":
+                                Console.Write("Введите длительность аудиокниги (в часах): ");
+                                int duration = int.Parse(Console.ReadLine());
+                                library.AddItem(id, new AudioBook(title, authorOrEditor, TimeSpan.FromHours(duration)));
+                                break;
+                            case "3":
+                                library.AddItem(id, new Magazine(title, authorOrEditor));
+                                break;
+                        }
+                        break;
 
-                if (returnAnswer.Trim().ToLower() == "y" && itemToBorrow != null)
-                {
-                    member.ReturnItem(itemToBorrow);
-                }
+                    case "2":
+                        Console.Write("Введите имя читателя: ");
+                        string name = Console.ReadLine();
+                        library.RegisterMember(new Member(name));
+                        break;
 
-                library.DisplayAllItems();
+                    case "3":
+                        Console.Write("Введите ID предмета: ");
+                        int itemId = int.Parse(Console.ReadLine());
+                        Console.Write("Введите имя читателя: ");
+                        string borrower = Console.ReadLine();
 
-                Console.Write("\nХотите взять другой предмет? (y/n): ");
-                string continueAnswer = Console.ReadLine();
-                if (continueAnswer.Trim().ToLower() != "y")
-                {
-                    continueLibrary = false;
+                        LibraryUser user = library.Members.Find(m => m.Name == borrower);
+                        if (user != null)
+                        {
+                            ILibraryItem itemToBorrow = library[itemId];
+                            if (itemToBorrow != null)
+                            {
+                                user.BorrowItem(itemToBorrow);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Предмет с таким ID не найден.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Читатель не зарегистрирован.");
+                        }
+                        break;
+
+                    case "4":
+                        Console.Write("Введите ID предмета, который хотите вернуть: ");
+                        int returnId = int.Parse(Console.ReadLine());
+                        Console.Write("Введите имя читателя: ");
+                        string returner = Console.ReadLine();
+
+                        LibraryUser returningUser = library.Members.Find(m => m.Name == returner);
+                        if (returningUser != null)
+                        {
+                            ILibraryItem itemToReturn = library[returnId];
+                            if (itemToReturn != null)
+                            {
+                                returningUser.ReturnItem(itemToReturn);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Предмет с таким ID не найден.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Читатель не зарегистрирован.");
+                        }
+                        break;
+
+                    case "5":
+                        library.DisplayAllItems();
+                        break;
+
+                    case "6":
+                        return;
+
+                    default:
+                        Console.WriteLine("Некорректный ввод. Попробуйте еще раз.");
+                        break;
                 }
             }
-
-            Console.WriteLine("Спасибо за использование библиотеки!");
         }
     }
 }
