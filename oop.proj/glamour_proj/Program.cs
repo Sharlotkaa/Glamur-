@@ -208,9 +208,24 @@ namespace LibraryManagementSystem
             Members = new List<LibraryUser>();
         }
 
+        //индексатор для доступа по ID
+        public ILibraryItem this[int id]
+        {
+            get => Items.ContainsKey(id) ? Items[id] : null;
+        }
+
         public void AddItem(int id, ILibraryItem item)
         {
             Items[id] = item;
+        }
+
+        //использование params для добавления нескольких книг
+        public void AddItems(params (int id, ILibraryItem item)[] items)
+        {
+            foreach (var (id, item) in items)
+            {
+                AddItem(id, item);
+            }
         }
 
         public void RegisterMember(LibraryUser member)
@@ -228,15 +243,9 @@ namespace LibraryManagementSystem
             }
         }
 
-        public ILibraryItem FindItemById(int id)
-        {
-            return Items.ContainsKey(id) ? Items[id] : null;
-        }
-
         public abstract void AdditionalLibraryFunctionality();
     }
 
-    // Конкретный класс библиотеки
     public class Library : LibraryBase
     {
         public Library() : base()
@@ -245,21 +254,21 @@ namespace LibraryManagementSystem
 
         public override void AdditionalLibraryFunctionality()
         {
-            // Реализация специфичной функциональности для стандартной библиотеки
+           //
         }
     }
 
-    // Главная программа
     class Program
     {
         static void Main(string[] args)
         {
             Library library = new Library();
 
-            // Добавление книг с уникальными ID
-            library.AddItem(1, new EBook("The Master and Margarita", "Mikhail Bulgakov", 300));
-            library.AddItem(2, new EBook("War and Peace", "Lev Tolstoy", 400));
-            library.AddItem(3, new AudioBook("Harry Potter Audiobook", "J.K. Rowling", TimeSpan.FromHours(8)));
+            library.AddItems(
+                (1, new EBook("The Master and Margarita", "Mikhail Bulgakov", 300)),
+                (2, new EBook("War and Peace", "Lev Tolstoy", 400)),
+                (3, new AudioBook("Harry Potter Audiobook", "J.K. Rowling", TimeSpan.FromHours(8)))
+            );
 
             Console.Write("Добро пожаловать в библиотеку. Введите ваше имя: ");
             string fullName = Console.ReadLine();
@@ -277,7 +286,7 @@ namespace LibraryManagementSystem
                 Console.Write("\nВведите ID предмета, который хотите взять: ");
                 if (int.TryParse(Console.ReadLine(), out int itemId))
                 {
-                    ILibraryItem itemToBorrow = library.FindItemById(itemId);
+                    ILibraryItem itemToBorrow = library[itemId]; // Используем индексатор
 
                     if (itemToBorrow != null)
                     {
