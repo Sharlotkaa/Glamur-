@@ -1,65 +1,421 @@
 using System;
 using System.Collections.Generic;
 
-codespace-laughing-chainsaw-7v9wx565pw77hr9x9
-// Класс, представляющий книгу
-public class Book
+namespace LibraryManagementSystem
 {
-    public string Title { get; set; }
-    public string Author { get; set; }
-    public int Year { get; set; }
-
-
-    // Конструктор
-    public Book(string title, string author, int year)
+    // Общий интерфейс для всех библиотечных предметов
+    public interface ILibraryItem
     {
-        Title = title;
-        Author = author;
-        Year = year;
+        string GetTitle();
+        string GetAuthor();
+        void DisplayInfo();
+        bool IsAvailable { get; }
+        void Borrow();
+        void Return();
     }
 
-    // Переопределение метода для удобного вывода
-    public override string ToString()
+    // Абстрактный класс для книг
+    public abstract class Book : ILibraryItem
     {
-        return $"Название: {Title}, Автор: {Author}, Год: {Year}";
+        protected string Title { get; private set; }
+        protected string Author { get; private set; }
+        public bool IsAvailable { get; private set; }
+
+        public Book(string title, string author)
+        {
+            Title = title;
+            Author = author;
+            IsAvailable = true;
+        }
+
+        public string GetTitle()
+        {
+            return Title;
+        }
+
+        public string GetAuthor()
+        {
+            return Author;
+        }
+
+        public abstract void DisplayInfo();
+
+        public void Borrow()
+        {
+            if (IsAvailable)
+            {
+                IsAvailable = false;
+            }
+            else
+            {
+                Console.WriteLine("Предмет уже взят.");
+            }
+        }
+
+        public void Return()
+        {
+            IsAvailable = true;
+        }
     }
-}
 
-// Главный класс программы
-class Program
-{
-    static void Main(string[] args)
+    // Класс электронной книги
+    public class EBook : Book
     {
- codespace-laughing-chainsaw-7v9wx565pw77hr9x9
-        // Создаём список книг
-        List<Book> books = new List<Book>();
+        public int FileSize { get; private set; }
 
-        // Добавляем книги в список
-        books.Add(new Book("The Catcher in the Rye", "J.D. Salinger", 1951));
-        books.Add(new Book("To Kill a Mockingbird", "Harper Lee", 1960));
-        books.Add(new Book("1984", "George Orwell", 1949));
-        books.Add(new Book("The Great Gatsby", "F. Scott Fitzgerald", 1925));
-        books.Add(new Book("Moby Dick", "Herman Melville", 1851));
-
-
-        // Выводим список книг на экран
-        Console.WriteLine("Список книг:");
-        foreach (Book book in books)
+        public EBook(string title, string author, int fileSize)
+            : base(title, author)
         {
-            Console.WriteLine(book.ToString());
+            FileSize = fileSize;
         }
-        
-        // Пример поиска книги по названию
-        string searchTitle = "1984";
-        Book foundBook = books.Find(b => b.Title == searchTitle);
-        
-        if (foundBook != null)
+
+        public override void DisplayInfo()
         {
-            Console.WriteLine($"\nНайдена книга: {foundBook}");
+            Console.WriteLine($"[E-Book] Название: {Title}, Автор: {Author}, Доступна: {IsAvailable}, Размер файла: {FileSize} MB");
         }
-        else
+    }
+
+    // Класс аудиокниги
+    public class AudioBook : Book
+    {
+        public TimeSpan Duration { get; private set; }
+
+        public AudioBook(string title, string author, TimeSpan duration)
+            : base(title, author)
         {
-            Console.WriteLine($"\nКнига с названием '{searchTitle}' не найдена.");
+            Duration = duration;
+        }
+
+        public override void DisplayInfo()
+        {
+            Console.WriteLine($"[AudioBook] Название: {Title}, Автор: {Author}, Доступна: {IsAvailable}, Длительность: {Duration}");
+        }
+    }
+
+    // Класс журнала
+    public class Magazine : ILibraryItem
+    {
+        public string Title { get; private set; }
+        public string Editor { get; private set; }
+        public bool IsAvailable { get; private set; }
+
+        public Magazine(string title, string editor)
+        {
+            Title = title;
+            Editor = editor;
+            IsAvailable = true;
+        }
+
+        public string GetTitle()
+        {
+            return Title;
+        }
+
+        public string GetAuthor()
+        {
+            return Editor;
+        }
+
+        public void DisplayInfo()
+        {
+            Console.WriteLine($"[Magazine] Название: {Title}, Редактор: {Editor}, Доступна: {IsAvailable}");
+        }
+
+        public void Borrow()
+        {
+            if (IsAvailable)
+            {
+                IsAvailable = false;
+            }
+            else
+            {
+                Console.WriteLine("Журнал уже взят.");
+            }
+        }
+
+        public void Return()
+        {
+            IsAvailable = true;
+        }
+    }
+
+    // Класс для пользователей библиотеки
+    public abstract class LibraryUser
+    {
+        public string Name { get; private set; }
+        protected List<ILibraryItem> BorrowedItems { get; set; }
+
+        public LibraryUser(string name)
+        {
+            Name = name;
+            BorrowedItems = new List<ILibraryItem>();
+        }
+
+        public void BorrowItem(ILibraryItem item)
+        {
+            if (item.IsAvailable)
+            {
+                BorrowedItems.Add(item);
+                item.Borrow();
+                Console.WriteLine($"{Name} взял(а) предмет: {item.GetTitle()}");
+            }
+            else
+            {
+                Console.WriteLine($"Предмет {item.GetTitle()} недоступен.");
+            }
+        }
+
+        public void ReturnItem(ILibraryItem item)
+        {
+            if (BorrowedItems.Contains(item))
+            {
+                BorrowedItems.Remove(item);
+                item.Return();
+                Console.WriteLine($"{Name} вернул(а) предмет: {item.GetTitle()}");
+            }
+            else
+            {
+                Console.WriteLine($"{Name} не брал(а) предмет: {item.GetTitle()}");
+            }
+        }
+
+        public abstract void DisplayUserInfo();
+    }
+
+    public class Member : LibraryUser
+    {
+        public Member(string name) : base(name)
+        {
+        }
+
+        public override void DisplayUserInfo()
+        {
+            Console.WriteLine($"Читатель: {Name}, Количество взятых предметов: {BorrowedItems.Count}");
+        }
+    }
+
+    public class PremiumMember : LibraryUser
+    {
+        public DateTime MembershipExpiry { get; private set; }
+
+        public PremiumMember(string name, DateTime expiryDate) : base(name)
+        {
+            MembershipExpiry = expiryDate;
+        }
+
+        public override void DisplayUserInfo()
+        {
+            Console.WriteLine($"Премиум читатель: {Name}, Срок действия членства: {MembershipExpiry.ToShortDateString()}, Количество взятых предметов: {BorrowedItems.Count}");
+        }
+    }
+
+    public abstract class LibraryBase
+    {
+        protected List<ILibraryItem> Items { get; set; }
+        protected List<LibraryUser> Members { get; set; }
+
+        public LibraryBase()
+        {
+            Items = new List<ILibraryItem>();
+            Members = new List<LibraryUser>();
+        }
+
+        public void AddItem(ILibraryItem item)
+        {
+            Items.Add(item);
+        }
+
+        public void RegisterMember(LibraryUser member)
+        {
+            Members.Add(member);
+            Console.WriteLine($"Зарегистрирован читатель: {member.Name}");
+        }
+
+        public void DisplayAllItems()
+        {
+            Console.WriteLine("\nПредметы в библиотеке:");
+            foreach (var item in Items)
+            {
+                item.DisplayInfo();
+            }
+        }
+
+        public ILibraryItem FindItemByTitle(string title)
+        {
+            return Items.Find(item => item.GetTitle().Equals(title, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public abstract void AdditionalLibraryFunctionality();
+    }
+
+    public class Library : LibraryBase
+    {
+        public Library() : base()
+        {
+        }
+
+        public override void AdditionalLibraryFunctionality()
+        {
+            // Реализация специфичной функциональности для стандартной библиотеки
+        }
+    }
+
+    // Классы для работы с массивами
+    public class BookTitles
+    {
+        public string[] Titles;
+
+        public BookTitles()
+        {
+            Titles = new string[] { "The Master and Margarita", "War and Peace", "The Lord of the Rings", "Cloud Atlas", "Harry Potter" };
+        }
+
+        public void DisplayTitles()
+        {
+            Console.WriteLine("Названия книг в библиотеке:");
+            foreach (var title in Titles)
+            {
+                Console.WriteLine($"- {title}");
+            }
+        }
+    }
+
+    public class BookInfo
+    {
+        public string[,] Books;
+
+        public BookInfo()
+        {
+            Books = new string[,]
+            {
+                { "The Master and Margarita", "Mikhail Bulgakov", "300 MB" },
+                { "War and Peace", "Lev Tolstoy", "400 MB" },
+                { "The Lord of the Rings", "J. R. R. Tolkien", "500 MB" },
+                { "Cloud Atlas", "David Mitchell", "6 hours" },
+                { "Harry Potter", "J.K. Rowling", "8 hours" }
+            };
+        }
+
+        public void DisplayBooks()
+        {
+            Console.WriteLine("\nИнформация о книгах:");
+            for (int i = 0; i < Books.GetLength(0); i++)
+            {
+                Console.WriteLine($"Название: {Books[i, 0]}, Автор: {Books[i, 1]}, Размер/Длительность: {Books[i, 2]}");
+            }
+        }
+    }
+
+    public class BooksByGenre
+    {
+        public string[][] Genres;
+
+        public BooksByGenre()
+        {
+            Genres = new string[][]
+            {
+                new string[] { "The Master and Margarita", "War and Peace" }, // Литература
+                new string[] { "The Lord of the Rings", "Harry Potter" }, // Фэнтези
+                new string[] { "Cloud Atlas" } // Научная фантастика
+            };
+        }
+
+        public void DisplayBooksByGenre()
+        {
+            string[] genreNames = { "Литература", "Фэнтези", "Научная фантастика" };
+
+            for (int i = 0; i < Genres.Length; i++)
+            {
+                Console.WriteLine($"\nЖанр: {genreNames[i]}");
+                foreach (var book in Genres[i])
+                {
+                    Console.WriteLine($"- {book}");
+                }
+            }
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Library library = new Library();
+
+            // Использование одномерного массива для отображения названий книг
+            BookTitles bookTitles = new BookTitles();
+            bookTitles.DisplayTitles();
+
+            // Использование многомерного массива для отображения информации о книгах
+            BookInfo bookInfo = new BookInfo();
+            bookInfo.DisplayBooks();
+
+            // Использование зубчатого массива для отображения книг по жанрам
+            BooksByGenre booksByGenre = new BooksByGenre();
+            booksByGenre.DisplayBooksByGenre();
+
+            // Добавление книг в библиотеку
+            library.AddItem(new EBook("The Master and Margarita", "Mikhail Bulgakov", 300));
+            library.AddItem(new EBook("War and Peace", "Lev Tolstoy", 400));
+            library.AddItem(new EBook("The Lord of the Rings", "J. R. R. Tolkien", 500));
+            library.AddItem(new AudioBook("Cloud Atlas Audiobook", "David Mitchell", TimeSpan.FromHours(6)));
+            library.AddItem(new AudioBook("Harry Potter Audiobook", "J.K. Rowling", TimeSpan.FromHours(8)));
+
+            // Ввод имени пользователя
+            Console.Write("Добро пожаловать в библиотеку. Введите ваше имя: ");
+            string firstName = Console.ReadLine();
+
+            Console.Write("Введите вашу фамилию: ");
+            string lastName = Console.ReadLine();
+
+            string fullName = $"{firstName} {lastName}";
+
+            // Регистрация читателя
+            Member member = new Member(fullName);
+            library.RegisterMember(member);
+
+            bool continueLibrary = true;
+
+            while (continueLibrary)
+            {
+                // Вывод всех предметов
+                library.DisplayAllItems();
+
+                Console.Write("\nВведите название предмета, который хотите взять: ");
+                string itemTitle = Console.ReadLine();
+
+                // Поиск предмета
+                ILibraryItem itemToBorrow = library.FindItemByTitle(itemTitle);
+
+                if (itemToBorrow != null)
+                {
+                    member.BorrowItem(itemToBorrow);
+                }
+                else
+                {
+                    Console.WriteLine("Такого предмета нет в библиотеке.");
+                }
+
+                library.DisplayAllItems();
+
+                Console.Write("\nХотите вернуть предмет? (y/n): ");
+                string returnAnswer = Console.ReadLine();
+
+                if (returnAnswer.Trim().ToLower() == "y" && itemToBorrow != null)
+                {
+                    member.ReturnItem(itemToBorrow);
+                }
+
+                library.DisplayAllItems();
+
+                Console.Write("\nХотите взять другой предмет? (y/n): ");
+                string continueAnswer = Console.ReadLine();
+                if (continueAnswer.Trim().ToLower() != "y")
+                {
+                    continueLibrary = false;
+                }
+            }
+
+            Console.WriteLine("Спасибо за использование библиотеки!");
         }
     }
 }
