@@ -1,0 +1,14 @@
+C:\Users\soull\glamur\bin\Debug\net8.0\glamur.exe
+C:\Users\soull\glamur\bin\Debug\net8.0\glamur.deps.json
+C:\Users\soull\glamur\bin\Debug\net8.0\glamur.runtimeconfig.json
+C:\Users\soull\glamur\bin\Debug\net8.0\glamur.dll
+C:\Users\soull\glamur\bin\Debug\net8.0\glamur.pdb
+C:\Users\soull\glamur\obj\Debug\net8.0\glamur.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\soull\glamur\obj\Debug\net8.0\glamur.AssemblyInfoInputs.cache
+C:\Users\soull\glamur\obj\Debug\net8.0\glamur.AssemblyInfo.cs
+C:\Users\soull\glamur\obj\Debug\net8.0\glamur.csproj.CoreCompileInputs.cache
+C:\Users\soull\glamur\obj\Debug\net8.0\glamur.dll
+C:\Users\soull\glamur\obj\Debug\net8.0\refint\glamur.dll
+C:\Users\soull\glamur\obj\Debug\net8.0\glamur.pdb
+C:\Users\soull\glamur\obj\Debug\net8.0\glamur.genruntimeconfig.cache
+C:\Users\soull\glamur\obj\Debug\net8.0\ref\glamur.dll
