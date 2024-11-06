@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using System.Xml.Serialization;
 
 namespace LibraryManagementSystem
 {
@@ -15,6 +18,7 @@ namespace LibraryManagementSystem
     }
 
     // Абстрактный базовый класс для книг
+    [Serializable]
     public abstract class Book : ILibraryItem
     {
         protected string Title { get; private set; }
@@ -59,6 +63,7 @@ namespace LibraryManagementSystem
     }
 
     // Наследник для электронной книги
+    [Serializable]
     public class EBook : Book
     {
         public int FileSize { get; private set; } // в МБ
@@ -76,6 +81,7 @@ namespace LibraryManagementSystem
     }
 
     // Наследник для аудиокниги
+    [Serializable]
     public class AudioBook : Book
     {
         public TimeSpan Duration { get; private set; }
@@ -93,6 +99,7 @@ namespace LibraryManagementSystem
     }
 
     // Класс для журналов
+    [Serializable]
     public class Magazine : ILibraryItem
     {
         public string Title { get; private set; }
@@ -140,6 +147,7 @@ namespace LibraryManagementSystem
     }
 
     // Абстрактный класс для пользователей библиотеки
+    [Serializable]
     public abstract class LibraryUser
     {
         public string Name { get; private set; }
@@ -183,11 +191,10 @@ namespace LibraryManagementSystem
     }
 
     // Конкретный класс читателя
+    [Serializable]
     public class Member : LibraryUser
     {
-        public Member(string name) : base(name)
-        {
-        }
+        public Member(string name) : base(name) { }
 
         public override void DisplayUserInfo()
         {
@@ -196,9 +203,9 @@ namespace LibraryManagementSystem
     }
 
     // Абстрактный класс для библиотеки
+    [Serializable]
     public abstract class LibraryBase
     {
-        // Используем Dictionary для хранения предметов с уникальными идентификаторами
         protected Dictionary<int, ILibraryItem> Items { get; set; }
         protected List<LibraryUser> Members { get; set; }
 
@@ -208,24 +215,13 @@ namespace LibraryManagementSystem
             Members = new List<LibraryUser>();
         }
 
-        //индексатор для доступа по ID
-        public ILibraryItem this[int id]
-        {
-            get => Items.ContainsKey(id) ? Items[id] : null;
-        }
+        public ILibraryItem this[int id] => Items.ContainsKey(id) ? Items[id] : null;
 
-        public void AddItem(int id, ILibraryItem item)
-        {
-            Items[id] = item;
-        }
+        public void AddItem(int id, ILibraryItem item) => Items[id] = item;
 
-        //использование params для добавления нескольких книг
         public void AddItems(params (int id, ILibraryItem item)[] items)
         {
-            foreach (var (id, item) in items)
-            {
-                AddItem(id, item);
-            }
+            foreach (var (id, item) in items) AddItem(id, item);
         }
 
         public void RegisterMember(LibraryUser member)
@@ -237,25 +233,42 @@ namespace LibraryManagementSystem
         public void DisplayAllItems()
         {
             Console.WriteLine("\nПредметы в библиотеке:");
-            foreach (var item in Items)
-            {
-                item.Value.DisplayInfo();
-            }
+            foreach (var item in Items) item.Value.DisplayInfo();
         }
 
         public abstract void AdditionalLibraryFunctionality();
+
+        public void SaveLibraryText(string filePath)
+        {
+            using var writer = new StreamWriter(filePath);
+            foreach (var item in Items.Values)
+            {
+                writer.WriteLine($"{item.GetTitle()}, {item.GetAuthor()}, Available: {item.IsAvailable}");
+            }
+        }
+
+        public void SaveLibraryBinary(string filePath)
+        {
+            using (MemoryStream memoryStream = new MemoryStream())
+            {
+                var serializer = new XmlSerializer(typeof(LibraryBase));
+                serializer.Serialize(memoryStream, this);
+                File.WriteAllBytes(filePath, memoryStream.ToArray());
+            }
+        }
+
+        public void SaveLibraryJson(string filePath)
+        {
+            var json = JsonSerializer.Serialize(this);
+            File.WriteAllText(filePath, json);
+        }
     }
 
+    // Реализация библиотеки
+    [Serializable]
     public class Library : LibraryBase
     {
-        public Library() : base()
-        {
-        }
-
-        public override void AdditionalLibraryFunctionality()
-        {
-           //
-        }
+        public override void AdditionalLibraryFunctionality() { }
     }
 
     class Program
@@ -282,47 +295,32 @@ namespace LibraryManagementSystem
             while (continueLibrary)
             {
                 library.DisplayAllItems();
-
                 Console.Write("\nВведите ID предмета, который хотите взять: ");
                 if (int.TryParse(Console.ReadLine(), out int itemId))
                 {
-                    ILibraryItem itemToBorrow = library[itemId]; // Используем индексатор
-
-                    if (itemToBorrow != null)
-                    {
-                        member.BorrowItem(itemToBorrow);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Такого предмета нет в библиотеке.");
-                    }
+                    ILibraryItem itemToBorrow = library[itemId];
+                    if (itemToBorrow != null) member.BorrowItem(itemToBorrow);
+                    else Console.WriteLine("Такого предмета нет в библиотеке.");
 
                     library.DisplayAllItems();
-
                     Console.Write("\nХотите вернуть предмет? (y/n): ");
-                    string returnAnswer = Console.ReadLine();
-
-                    if (returnAnswer.Trim().ToLower() == "y")
-                    {
-                        member.ReturnItem(itemToBorrow);
-                    }
+                    if (Console.ReadLine()?.Trim().ToLower() == "y") member.ReturnItem(itemToBorrow);
 
                     library.DisplayAllItems();
-
                     Console.Write("\nХотите взять другой предмет? (y/n): ");
-                    string continueAnswer = Console.ReadLine();
-                    if (continueAnswer.Trim().ToLower() != "y")
-                    {
-                        continueLibrary = false;
-                    }
+                    if (Console.ReadLine()?.Trim().ToLower() != "y") continueLibrary = false;
                 }
-                else
-                {
-                    Console.WriteLine("Неправильный ввод ID.");
-                }
+                else Console.WriteLine("Неправильный ввод ID.");
             }
+
+            // Сохранение данных библиотеки
+            library.SaveLibraryText("LibraryItems.txt");
+            library.SaveLibraryBinary("LibraryItems.bin");
+            library.SaveLibraryJson("LibraryItems.json");
 
             Console.WriteLine("Спасибо за использование библиотеки!");
         }
     }
 }
+
+        
